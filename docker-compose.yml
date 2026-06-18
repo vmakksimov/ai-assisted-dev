@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: devguard-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-devguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devguard}
+      POSTGRES_DB: ${POSTGRES_DB:-devguard}
+    ports:
+      - "5432:5432"
+    volumes:
+      - devguard_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-devguard} -d ${POSTGRES_DB:-devguard}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Optional DB admin UI. Start with: docker compose --profile tools up -d
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: devguard-pgadmin
+    profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@devguard.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+volumes:
+  devguard_pgdata:
