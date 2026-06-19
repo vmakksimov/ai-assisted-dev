@@ -2,13 +2,20 @@ import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
+import { decodeDiffFile } from './diffFileDecoder';
 
 const MAX_DIFF_BYTES = 200_000;
 const ALLOWED_EXTENSIONS = ['.diff', '.patch', '.txt'];
+const COMPACT_ROWS = 12;
+const EXPANDED_ROWS = 32;
 
 export interface DiffSubmission {
   kind: 'paste' | 'upload';
@@ -37,6 +44,7 @@ export function DiffInput({
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const acceptFile = (selected: File) => {
@@ -50,7 +58,13 @@ export function DiffInput({
     }
     setError(null);
     setFile(selected);
-    void selected.text().then(setDiffText);
+    void selected
+      .arrayBuffer()
+      .then(decodeDiffFile)
+      .then(setDiffText)
+      .catch(() => {
+        setError('Could not read the selected file.');
+      });
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -112,9 +126,18 @@ export function DiffInput({
           >
             Upload .diff / .patch
           </Button>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1 }}>
             {file ? file.name : 'or drag a file here, or paste below'}
           </Typography>
+          <Tooltip title={expanded ? 'Collapse diff view' : 'Expand diff view'}>
+            <IconButton
+              size="small"
+              aria-label={expanded ? 'Collapse diff view' : 'Expand diff view'}
+              onClick={() => setExpanded((prev) => !prev)}
+            >
+              {expanded ? <FullscreenExitIcon /> : <FullscreenIcon />}
+            </IconButton>
+          </Tooltip>
           <input
             ref={inputRef}
             type="file"
@@ -136,9 +159,18 @@ export function DiffInput({
             setFile(null);
           }}
           multiline
-          minRows={12}
+          minRows={expanded ? EXPANDED_ROWS : COMPACT_ROWS}
+          maxRows={expanded ? EXPANDED_ROWS : undefined}
           fullWidth
-          slotProps={{ input: { sx: { fontFamily: 'monospace', fontSize: 13 } } }}
+          slotProps={{
+            input: {
+              sx: {
+                fontFamily: 'monospace',
+                fontSize: 13,
+                '& textarea': { resize: 'vertical' },
+              },
+            },
+          }}
         />
       </Box>
 

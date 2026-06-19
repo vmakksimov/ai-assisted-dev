@@ -47,10 +47,13 @@ docker compose up -d db
 cd backend
 uv sync
 uv run alembic upgrade head
-uv run uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload --port 8001
 ```
 
-API docs: http://localhost:8000/docs · Health: http://localhost:8000/api/v1/health
+> Runs on port **8001** to avoid colliding with other apps that commonly take 8000.
+> Use `127.0.0.1` (IPv4) rather than `localhost`, which can resolve to IPv6 `::1`.
+
+API docs: http://127.0.0.1:8001/docs · Health: http://127.0.0.1:8001/api/v1/health
 
 ### 4. Frontend
 
