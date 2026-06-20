@@ -1,0 +1,47 @@
+# .aiignore — paths AI agents/tools should skip to reduce context noise.
+# gitignore-style patterns. These are generated, vendored, secret, or binary —
+# none are useful as agent context, and excluding them keeps prompts focused on
+# source code.
+
+# --- Secrets (never feed to agents) ---
+.env
+.env.*
+!.env.example
+
+# --- Python: envs, caches, build artifacts ---
+.venv/
+venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# --- Node / frontend: deps and build output ---
+node_modules/
+frontend/dist/
+dist-ssr/
+*.tsbuildinfo
+coverage/
+
+# --- Lockfiles (large, low signal) ---
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+uv.lock
+
+# --- Database / Docker volumes ---
+postgres-data/
+*.sqlite
+*.sqlite3
+
+# --- VCS / IDE / logs ---
+.git/
+.idea/
+.vscode/
+*.log

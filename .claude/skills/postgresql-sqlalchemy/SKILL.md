@@ -50,7 +50,8 @@ description: PostgreSQL + SQLAlchemy 2.0 async patterns for DevGuard AI — asyn
   the repository so the application layer never sees SQLAlchemy.
 
 ## Alembic migration hygiene
-- Async Alembic `env.py` (uses the async engine). Run with `uv run alembic ...`.
+- Async Alembic `env.py` (uses the async engine). Run with `python -m alembic ...`
+  (inside the backend venv).
 - Autogenerate is a starting point, not gospel: **review every generated migration**.
   Autogenerate misses enum changes, server defaults, and some index/constraint details —
   fix by hand.

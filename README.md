@@ -17,22 +17,42 @@ This repository contains **Module 1**: the core web application. See
 - **Database:** PostgreSQL
 - **LLM:** Google Gemini (`google-genai`), default `gemini-2.5-flash`
 - **Frontend:** React + TypeScript + Vite + Material UI + React Query
-- **Tooling:** uv · ruff · mypy · pytest
+- **Tooling:** pip · ruff · mypy · pytest
 
 ## Prerequisites
 
-- Python 3.12+ and [uv](https://docs.astral.sh/uv/)
-- Node.js 20+
-- Docker (for local PostgreSQL)
+- Docker + Docker Compose (the only requirement for the one-command setup below)
 - A Google Gemini API key
+- For local (non-Docker) development: Python 3.12+ and Node.js 20+
 
-## Quickstart
+## Quickstart — everything in Docker (recommended)
 
-### 1. Configure environment
+Run the whole stack (PostgreSQL + backend + frontend) with one command.
 
 ```bash
 cp .env.example .env
 # edit .env and set GEMINI_API_KEY
+
+docker compose up -d --build
+```
+
+That's it:
+
+- **Frontend:** http://localhost:5173
+- **Backend API docs:** http://localhost:8009/docs
+- **Health:** http://localhost:8009/api/v1/health
+
+The backend container applies database migrations automatically on startup.
+Stop everything with `docker compose down` (add `-v` to also wipe the database volume).
+
+## Local development (without Docker)
+
+Run only PostgreSQL in Docker, and the apps on your host.
+
+### 1. Configure environment
+
+```bash
+cp .env.example .env        # set GEMINI_API_KEY
 ```
 
 ### 2. Start PostgreSQL
@@ -45,15 +65,14 @@ docker compose up -d db
 
 ```bash
 cd backend
-uv sync
-uv run alembic upgrade head
-uv run uvicorn app.main:app --reload --port 8001
+python -m venv .venv
+# Windows:  .\.venv\Scripts\activate     macOS/Linux:  source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload --port 8009
 ```
 
-> Runs on port **8001** to avoid colliding with other apps that commonly take 8000.
-> Use `127.0.0.1` (IPv4) rather than `localhost`, which can resolve to IPv6 `::1`.
-
-API docs: http://127.0.0.1:8001/docs · Health: http://127.0.0.1:8001/api/v1/health
+API docs: http://localhost:8009/docs · Health: http://localhost:8009/api/v1/health
 
 ### 4. Frontend
 
@@ -68,7 +87,11 @@ App: http://localhost:5173
 ## Tests
 
 ```bash
-cd backend && uv run pytest          # backend (Gemini mocked)
+# backend (Gemini mocked). Integration tests need a DEDICATED test DB:
+cd backend
+docker exec devguard-db psql -U devguard -d devguard -c "CREATE DATABASE devguard_test;"   # once
+TEST_DATABASE_URL=postgresql+asyncpg://devguard:devguard@localhost:5432/devguard_test python -m pytest
+
 cd frontend && npm run test          # frontend
 ```
 

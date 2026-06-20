@@ -63,7 +63,8 @@ adapter injected into the use case. No inner-layer changes.
 
 | Concern | Choice |
 |---|---|
-| Python deps / env | **uv** |
+| Python deps / env | **pip** + `requirements.txt` / `requirements-dev.txt` (+ venv) |
+| Containerization | **Docker Compose** (db + backend + frontend) |
 | Web framework | **FastAPI** (async) |
 | ORM | **SQLAlchemy 2.0** (async) + **asyncpg** |
 | Migrations | **Alembic** (async env) |
@@ -80,47 +81,30 @@ adapter injected into the use case. No inner-layer changes.
 
 ---
 
-## Repository layout
-
-```
-backend/
-  app/
-    main.py             FastAPI app factory, router mounting, lifespan
-    core/               config, logging, exception hierarchy, handlers
-    domain/             entities, enums, interfaces (Protocols) — framework-free
-    application/        use cases (orchestration, depends on domain only)
-    infrastructure/
-      db/               async session, ORM models, repositories
-      llm/              Gemini adapter + prompt templates
-      diff/             unified diff parser / validator
-    api/
-      deps.py           dependency injection wiring
-      schemas.py        request/response DTOs (Pydantic)
-      routers/          health, reviews
-  migrations/           Alembic env + versions
-  tests/                unit, integration, fixtures
-frontend/
-  src/
-    api/                axios client + typed API calls
-    pages/              Analyze, History, ReviewDetail
-    components/         DiffInput, RiskFindingCard, ... 
-    hooks/              React Query hooks
-```
-
----
-
 ## Dev workflow
 
-**Backend** (run from `backend/`):
+**Whole stack in Docker** (from repo root) — the simplest path:
 
 ```bash
-uv sync                                   # install deps
+cp .env.example .env                      # set GEMINI_API_KEY
+docker compose up -d --build              # db + backend (:8009) + frontend (:5173)
+```
+
+The backend container runs `alembic upgrade head` on startup. Frontend at
+http://localhost:5173, API docs at http://localhost:8009/docs.
+
+**Backend on the host** (run from `backend/`, deps via pip + venv):
+
+```bash
+python -m venv .venv                      # then activate it
+python -m pip install -r requirements-dev.txt
 docker compose up -d db                   # start Postgres (from repo root)
-uv run alembic upgrade head               # apply migrations
-uv run uvicorn app.main:app --reload      # serve at http://localhost:8000
-uv run pytest                             # run tests (Gemini mocked)
-uv run ruff check . && uv run ruff format --check .
-uv run mypy app
+python -m alembic upgrade head            # apply migrations
+python -m uvicorn app.main:app --reload --port 8009   # serve at http://localhost:8009
+# Tests need a dedicated test DB (the suite drops tables in teardown):
+TEST_DATABASE_URL=postgresql+asyncpg://devguard:devguard@localhost:5432/devguard_test python -m pytest
+python -m ruff check . && python -m ruff format --check .
+python -m mypy app
 ```
 
 **Frontend** (run from `frontend/`):
@@ -199,3 +183,10 @@ Keep Module 1 focused. The **Scope Guardian** agent exists to enforce this.
 - **ai-integration** — Gemini adapter, prompts, structured output, retries.
 - **testing** — test pyramid, fixtures, fake LLM port, coverage.
 - **scope-guardian** — rejects scope creep into future modules.
+
+## Agent context (`.claudeignore`)
+
+This is the **single** project guide — there are no per-folder `CLAUDE.md` files.
+`.claudeignore` at the repo root lists paths agents/tools should skip (secrets, virtual
+envs, `node_modules`, build output, caches, lockfiles, DB volumes) to keep context
+focused on source. Update it when adding new generated or vendored directories.

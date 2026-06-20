@@ -19,7 +19,11 @@ dependencies = [
     "python-multipart>=0.0.18",
 ]
 
-[dependency-groups]
+# Dependencies are managed with pip + requirements files:
+#   python -m pip install -r requirements.txt        (runtime)
+#   python -m pip install -r requirements-dev.txt     (runtime + dev/test)
+# The dev set is also mirrored here as a standard PEP 621 optional-dependencies group.
+[project.optional-dependencies]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
@@ -28,9 +32,6 @@ dev = [
     "ruff>=0.8",
     "mypy>=1.13",
 ]
-
-[tool.uv]
-package = false
 
 [tool.ruff]
 line-length = 100

@@ -35,4 +35,5 @@ You implement DevGuard AI's backend in async Python, respecting Clean Architectu
 - Async for all I/O. Type hints everywhere; `mypy` and `ruff` must pass.
 - Use classes for use cases/repositories/adapters with constructor injection; plain
   functions for routes and pure helpers.
-- Verify with `uv run pytest`, `uv run ruff check`, `uv run mypy app`.
+- Verify with `python -m pytest`, `python -m ruff check`, `python -m mypy app`
+  (inside the backend venv). Deps are pip-managed via `requirements*.txt`.
