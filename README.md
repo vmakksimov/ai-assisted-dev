@@ -86,13 +86,44 @@ App: http://localhost:5173
 
 ## Tests
 
-```bash
-# backend (Gemini mocked). Integration tests need a DEDICATED test DB:
-cd backend
-docker exec devguard-db psql -U devguard -d devguard -c "CREATE DATABASE devguard_test;"   # once
-TEST_DATABASE_URL=postgresql+asyncpg://devguard:devguard@localhost:5432/devguard_test python -m pytest
+Backend tests run with **pytest** and Gemini is always mocked. Activate the backend
+venv first (or call `.venv`'s python directly, e.g. `.\.venv\Scripts\python.exe -m pytest`).
 
-cd frontend && npm run test          # frontend
+**Unit tests only** (no database needed):
+
+```bash
+cd backend
+python -m pytest tests/unit
+```
+
+**Full suite (unit + integration).** Integration tests need a **dedicated** test
+database — they drop all tables in teardown, so they must NOT point at your dev DB:
+
+```bash
+# Ensure Postgres is running (from repo root): docker compose up -d db
+# Create the test DB once:
+docker exec devguard-db psql -U devguard -d devguard -c "CREATE DATABASE devguard_test;"
+```
+
+Then set `TEST_DATABASE_URL` and run pytest — **mind your shell**:
+
+```bash
+# bash / zsh (Linux, macOS, Git Bash):
+cd backend
+TEST_DATABASE_URL=postgresql+asyncpg://devguard:devguard@localhost:5432/devguard_test python -m pytest
+```
+
+```powershell
+# Windows PowerShell:
+cd backend
+$env:TEST_DATABASE_URL = "postgresql+asyncpg://devguard:devguard@localhost:5432/devguard_test"
+python -m pytest
+```
+
+**Frontend:**
+
+```bash
+cd frontend && npm run test
 ```
 
 ## Project layout

@@ -107,6 +107,10 @@ python -m ruff check . && python -m ruff format --check .
 python -m mypy app
 ```
 
+> Shell note: the inline `VAR=value cmd` env syntax above is bash. On **Windows
+> PowerShell** set it separately first: `$env:TEST_DATABASE_URL = "..."` then `python -m pytest`.
+> Unit tests alone need no DB: `python -m pytest tests/unit`.
+
 **Frontend** (run from `frontend/`):
 
 ```bash
